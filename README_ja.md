@@ -15,16 +15,31 @@ Claude Codeのセッションログから日報を生成するAgent Skill
 - ファイル更新日時で事前フィルタリングして高速化
 - Markdown形式で構造化された日報を出力
 
+## 対応言語
+
+| ディレクトリ | 言語 | コマンド |
+|-------------|------|---------|
+| `nippo/` | 日本語 | `/nippo` |
+| `nippo-en/` | English (英語) | `/nippo` |
+| `nippo-zh/` | 中文 (中国語) | `/nippo` |
+| `nippo-ko/` | 한국어 (韓国語) | `/nippo` |
+
 ## インストール
 
-リポジトリをクローンして、`nippo` ディレクトリをClaude Codeのskillsディレクトリにコピー:
+リポジトリをクローンして、好みの言語のディレクトリをClaude Codeのskillsディレクトリにコピー:
 
 ```bash
 git clone https://github.com/t-daisuke/nippo.git
-cp -r nippo/nippo ~/.claude/skills/
+cp -r nippo/nippo ~/.claude/skills/       # 日本語
+# または
+cp -r nippo/nippo-en ~/.claude/skills/    # 英語
+# または
+cp -r nippo/nippo-zh ~/.claude/skills/    # 中国語
+# または
+cp -r nippo/nippo-ko ~/.claude/skills/    # 韓国語
 ```
 
-または1コマンドで:
+または1コマンドで（日本語版の例）:
 
 ```bash
 git clone https://github.com/t-daisuke/nippo.git /tmp/nippo && cp -r /tmp/nippo/nippo ~/.claude/skills/
