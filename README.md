@@ -17,16 +17,17 @@ Claude Code Agent Skill for generating daily reports from session logs.
 
 ## Installation
 
-Copy the skill to your Claude Code skills directory:
+Clone the repository and copy the `nippo` directory to your Claude Code skills directory:
 
 ```bash
-cp -r . ~/.claude/skills/nippo
+git clone https://github.com/t-daisuke/nippo.git
+cp -r nippo/nippo ~/.claude/skills/
 ```
 
-Or clone directly:
+Or in one command:
 
 ```bash
-git clone https://github.com/t-daisuke/nippo.git ~/.claude/skills/nippo
+git clone https://github.com/t-daisuke/nippo.git /tmp/nippo && cp -r /tmp/nippo/nippo ~/.claude/skills/
 ```
 
 ## Usage

@@ -17,16 +17,17 @@ Claude Codeのセッションログから日報を生成するAgent Skill
 
 ## インストール
 
-スキルをClaude Codeのskillsディレクトリにコピー:
+リポジトリをクローンして、`nippo` ディレクトリをClaude Codeのskillsディレクトリにコピー:
 
 ```bash
-cp -r . ~/.claude/skills/nippo
+git clone https://github.com/t-daisuke/nippo.git
+cp -r nippo/nippo ~/.claude/skills/
 ```
 
-または直接クローン:
+または1コマンドで:
 
 ```bash
-git clone https://github.com/t-daisuke/nippo.git ~/.claude/skills/nippo
+git clone https://github.com/t-daisuke/nippo.git /tmp/nippo && cp -r /tmp/nippo/nippo ~/.claude/skills/
 ```
 
 ## 使い方
