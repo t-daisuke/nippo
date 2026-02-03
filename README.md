@@ -55,7 +55,10 @@ git clone https://github.com/t-daisuke/nippo.git /tmp/nippo && cp -r /tmp/nippo/
 
 ## Requirements
 
-- macOS (uses `stat -f` and `date -j` which are macOS-specific)
+- macOS or Linux (including WSL2)
+  - macOS: uses `date -v`/`-j` and `stat -f`
+  - Linux: uses `date -d` and `stat -c`
+  - OS is auto-detected at runtime
 - `jq` command for JSON parsing
 - Claude Code with Agent Skills support
 

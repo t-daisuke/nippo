@@ -55,7 +55,10 @@ git clone https://github.com/t-daisuke/nippo.git /tmp/nippo && cp -r /tmp/nippo/
 
 ## 動作環境
 
-- macOS（`stat -f` と `date -j` を使用しているため）
+- macOS または Linux（WSL2 含む）
+  - macOS: `date -v`/`-j`、`stat -f` を使用
+  - Linux: `date -d`、`stat -c` を使用
+  - 実行時に OS を自動判定
 - `jq` コマンド（JSONパース用）
 - Agent Skills対応のClaude Code
 
