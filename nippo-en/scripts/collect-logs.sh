@@ -8,10 +8,43 @@
 
 set -e
 
+# OS detection
+is_macos() { [[ "$(uname)" == "Darwin" ]]; }
+
+# Date calculation wrapper
+date_calc() {
+  local base_date="$1" offset="$2" # offset: -1, +1, etc.
+  if is_macos; then
+    date -j -f "%Y-%m-%d" "$base_date" -v"${offset}d" +%Y-%m-%d 2>/dev/null || echo "$base_date"
+  else
+    date -d "$base_date ${offset} day" +%Y-%m-%d 2>/dev/null || echo "$base_date"
+  fi
+}
+
+# Get file modification time
+file_mtime() {
+  if is_macos; then
+    stat -f "%Sm" -t "%Y-%m-%d" "$1" 2>/dev/null
+  else
+    stat -c "%Y" "$1" 2>/dev/null | cut -c1-10 | xargs -I{} date -d "@{}" +%Y-%m-%d 2>/dev/null
+  fi
+}
+
+# Convert UTC timestamp to local date
+timestamp_to_date() {
+  local ts="$1"
+  if is_macos; then
+    local utc_datetime="${ts%.*}+0000"
+    date -j -f "%Y-%m-%dT%H:%M:%S%z" "$utc_datetime" "+%Y-%m-%d" 2>/dev/null
+  else
+    date -d "$ts" "+%Y-%m-%d" 2>/dev/null
+  fi
+}
+
 # Determine target date
 if [ -n "$1" ]; then
   case "$1" in
-    yesterday) TARGET_DATE=$(date -v-1d +%Y-%m-%d) ;;
+    yesterday) TARGET_DATE=$(date_calc "$(date +%Y-%m-%d)" -1) ;;
     *)         TARGET_DATE="$1" ;;
   esac
 else
@@ -22,13 +55,13 @@ echo "# Daily Report Data - $TARGET_DATE"
 echo ""
 
 # Calculate previous and next day for modification time filter
-DATE_PREV=$(date -j -f "%Y-%m-%d" "$TARGET_DATE" -v-1d +%Y-%m-%d 2>/dev/null || echo "$TARGET_DATE")
-DATE_NEXT=$(date -j -f "%Y-%m-%d" "$TARGET_DATE" -v+1d +%Y-%m-%d 2>/dev/null || echo "$TARGET_DATE")
+DATE_PREV=$(date_calc "$TARGET_DATE" -1)
+DATE_NEXT=$(date_calc "$TARGET_DATE" +1)
 
 # Scan session logs (excluding subagents)
 find ~/.claude/projects -name "*.jsonl" -type f -not -path "*/subagents/*" 2>/dev/null | while read -r filepath; do
   # 1. Pre-filter by modification time (fast)
-  file_mtime=$(stat -f "%Sm" -t "%Y-%m-%d" "$filepath" 2>/dev/null) || continue
+  file_mtime=$(file_mtime "$filepath") || continue
 
   if [ "$file_mtime" != "$TARGET_DATE" ] && [ "$file_mtime" != "$DATE_PREV" ] && [ "$file_mtime" != "$DATE_NEXT" ]; then
     continue
@@ -41,8 +74,7 @@ find ~/.claude/projects -name "*.jsonl" -type f -not -path "*/subagents/*" 2>/de
     continue
   fi
 
-  utc_datetime="${first_timestamp%.*}+0000"
-  session_date=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$utc_datetime" "+%Y-%m-%d" 2>/dev/null) || continue
+  session_date=$(timestamp_to_date "$first_timestamp") || continue
 
   if [ "$session_date" = "$TARGET_DATE" ]; then
     # Extract project name
