@@ -8,10 +8,43 @@
 
 set -e
 
+# OS判定
+is_macos() { [[ "$(uname)" == "Darwin" ]]; }
+
+# 日付計算のラッパー
+date_calc() {
+  local base_date="$1" offset="$2" # offset: -1, +1 など
+  if is_macos; then
+    date -j -f "%Y-%m-%d" "$base_date" -v"${offset}d" +%Y-%m-%d 2>/dev/null || echo "$base_date"
+  else
+    date -d "$base_date ${offset} day" +%Y-%m-%d 2>/dev/null || echo "$base_date"
+  fi
+}
+
+# ファイルの更新日時を取得
+file_mtime() {
+  if is_macos; then
+    stat -f "%Sm" -t "%Y-%m-%d" "$1" 2>/dev/null
+  else
+    stat -c "%Y" "$1" 2>/dev/null | cut -c1-10 | xargs -I{} date -d "@{}" +%Y-%m-%d 2>/dev/null
+  fi
+}
+
+# UTCタイムスタンプをローカル日付に変換
+timestamp_to_date() {
+  local ts="$1"
+  if is_macos; then
+    local utc_datetime="${ts%.*}+0000"
+    date -j -f "%Y-%m-%dT%H:%M:%S%z" "$utc_datetime" "+%Y-%m-%d" 2>/dev/null
+  else
+    date -d "$ts" "+%Y-%m-%d" 2>/dev/null
+  fi
+}
+
 # 対象日付を決定
 if [ -n "$1" ]; then
   case "$1" in
-    yesterday) TARGET_DATE=$(date -v-1d +%Y-%m-%d) ;;
+    yesterday) TARGET_DATE=$(date_calc "$(date +%Y-%m-%d)" -1) ;;
     *)         TARGET_DATE="$1" ;;
   esac
 else
@@ -22,13 +55,13 @@ echo "# 日報データ - $TARGET_DATE"
 echo ""
 
 # 対象日の前日・当日・翌日を計算（更新日時フィルタ用）
-DATE_PREV=$(date -j -f "%Y-%m-%d" "$TARGET_DATE" -v-1d +%Y-%m-%d 2>/dev/null || echo "$TARGET_DATE")
-DATE_NEXT=$(date -j -f "%Y-%m-%d" "$TARGET_DATE" -v+1d +%Y-%m-%d 2>/dev/null || echo "$TARGET_DATE")
+DATE_PREV=$(date_calc "$TARGET_DATE" -1)
+DATE_NEXT=$(date_calc "$TARGET_DATE" +1)
 
 # セッションログを走査（subagentsは除外）
 find ~/.claude/projects -name "*.jsonl" -type f -not -path "*/subagents/*" 2>/dev/null | while read -r filepath; do
   # 1. 更新日時で事前フィルタリング（高速）
-  file_mtime=$(stat -f "%Sm" -t "%Y-%m-%d" "$filepath" 2>/dev/null) || continue
+  file_mtime=$(file_mtime "$filepath") || continue
 
   if [ "$file_mtime" != "$TARGET_DATE" ] && [ "$file_mtime" != "$DATE_PREV" ] && [ "$file_mtime" != "$DATE_NEXT" ]; then
     continue
@@ -41,8 +74,7 @@ find ~/.claude/projects -name "*.jsonl" -type f -not -path "*/subagents/*" 2>/de
     continue
   fi
 
-  utc_datetime="${first_timestamp%.*}+0000"
-  session_date=$(date -j -f "%Y-%m-%dT%H:%M:%S%z" "$utc_datetime" "+%Y-%m-%d" 2>/dev/null) || continue
+  session_date=$(timestamp_to_date "$first_timestamp") || continue
 
   if [ "$session_date" = "$TARGET_DATE" ]; then
     # プロジェクト名を抽出
